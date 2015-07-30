@@ -1,9 +1,9 @@
 {
   "name": "ipa-man",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Build ipa file for Xcode project",
   "bin": {
-    "ipa-main": "bin/ipa-build"
+    "ipa-man": "bin/ipa-build"
   },
   "repository": {
     "type": "git",
