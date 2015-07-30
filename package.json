@@ -1,6 +1,6 @@
 {
-  "name": "ipa-main",
-  "version": "0.0.1",
+  "name": "ipa-man",
+  "version": "0.0.3",
   "description": "Build ipa file for Xcode project",
   "bin": {
     "ipa-main": "bin/ipa-build"
@@ -21,6 +21,7 @@
   },
   "preferGlobal": true,
   "license": "Apache 2.0",
+  "readme": "README.md",
   "bugs": {
     "url": "https://github.com/zxy198717/ipa-build/issues"
   },
