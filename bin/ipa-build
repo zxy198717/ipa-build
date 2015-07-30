@@ -1,0 +1,125 @@
+#!/usr/bin/env node
+
+var program = require('commander');
+var fs = require('fs');
+var moment = require('moment');
+var log4js = require('log4js');
+log4js.replaceConsole();
+
+var commandExecPath = __dirname;
+
+var startTime = Date.now();
+
+program
+    .version('0.0.1')
+    .option('-p, --projectPath [value]', 'Project Source directory')
+    .option('-b, --buildPath [value]', 'Project Build Path')
+    .option('-o, --output [value]', 'ipa and dsym output directory')
+    .option('-s, --scheme [value]', 'Scheme Name')
+    .option('-m, --mobileprovision [value]', 'mobileprovision file')
+    .parse(process.argv);
+
+if (!fs.existsSync(program.projectPath)) {
+    throw new Error("Project Source directory don't exist!");
+}
+
+var workspaceName;
+var projectName;
+var scheme;
+
+var files = fs.readdirSync(program.projectPath);
+files.forEach(function(item) {
+    var tmpPath = program.projectPath + '/' + item,
+        stats = fs.statSync(tmpPath);
+
+    if (stats.isDirectory() && item.indexOf('.xcworkspace') > -1) {
+        workspaceName = item;
+    }
+
+    if (stats.isDirectory() && item.indexOf('.xcodeproj') > -1) {
+        projectName = item;
+    }
+});
+
+if (!workspaceName && !projectName) {
+    throw new Error("No validated Xcode project in directory: " + program.projectPath);
+};
+
+if (workspaceName) {
+    scheme = workspaceName.replace('.xcworkspace', '');
+} else {
+    scheme = projectName.replace('.xcodeproj', '');
+}
+
+var buildDay = moment().format('YYYY-MM-DD');
+var buildTime = moment().format('YYYYMMDDHHmmss');
+var buildPath = '/tmp/XcodeArchiveProduction/' + buildDay + '/' + scheme + '_' + buildTime + '_.xcarchive';
+
+if (!fs.existsSync(program.buildPath)) {
+    console.warn("Cannot find parameter `-b, --buildPath` or buildPath don't exist, Use default buildPath: " + buildPath);
+} else {
+    buildPath = program.buildPath + '/' + buildDay + '/' + scheme + '_' + buildTime + '_.xcarchive';
+}
+
+if (program.scheme) {
+    scheme = program.scheme;
+}
+
+process.chdir(program.projectPath);
+
+var ipaName = scheme + '_' + buildTime + '.ipa';
+var output = commandExecPath;
+
+if (!fs.existsSync(program.output)) {
+    console.warn("Cannot find parameter `-o, --output` or output don't exist, Use default output Path: " + output);
+} else {
+    output = program.buildPath;
+}
+
+var buildType = '';
+if (workspaceName) {
+    buildType = '-workspace ' + workspaceName;
+} else {
+    buildType = '-project ' + projectName;
+}
+
+var signing = '';
+if (!fs.existsSync(program.mobileprovision)) {
+    console.warn('Use project default mobileprovision');
+    signing = '-exportWithOriginalSigningIdentity';
+} else {
+    signing = '-exportProvisioningProfile ' + program.mobileprovision;
+}
+
+var cleanCmd = 'xctool -scheme ' + scheme + ' clean';
+var archiveCmd = 'xctool ' + buildType + ' -scheme ' + scheme + ' -configuration Release archive -archivePath ' + buildPath;
+var ipaCmd = "xcodebuild -exportArchive -exportFormat IPA -archivePath " + buildPath + " -exportPath " + output + "/" + ipaName + " " + signing;
+
+var spawn = require('child_process').spawn;
+
+function shspawn(command, callback) {
+    var child = spawn('sh', ['-c', command], {
+        stdio: 'inherit'
+    });
+    child.on('close', function(code) {
+        callback(code);
+    });
+}
+
+shspawn(cleanCmd, function(code) {
+    if (code != 0) {
+        return;
+    };
+    shspawn(archiveCmd, function(code) {
+        if (code != 0) {
+            return;
+        };
+
+        shspawn(ipaCmd, function(code){
+            var endTime = Date.now();
+            if(code == 0) {
+                console.log( 'Finished all works in ( ' + (endTime-startTime)+'ms )');    
+            }
+        });
+    });
+});

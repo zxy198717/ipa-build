@@ -1,0 +1,28 @@
+{
+  "name": "ipa-build",
+  "version": "1.0.0",
+  "description": "Build ipa file for Xcode project",
+  "bin": {
+    "ipa-build": "bin/ipa-build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zxy198717/ipa-build.git"
+  },
+  "keywords": [
+    "ipa",
+    "Xcode"
+  ],
+  "author": "AlvinZeng",
+  "dependencies": {
+    "commander": "2.8.1",
+    "moment": "2.10.6",
+    "log4js": "^0.6.26"
+  },
+  "preferGlobal": true,
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/zxy198717/ipa-build/issues"
+  },
+  "homepage": "https://github.com/zxy198717/ipa-build"
+}
